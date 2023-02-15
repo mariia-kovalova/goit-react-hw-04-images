@@ -41,11 +41,6 @@ export const App = () => {
     }
   }, [page, query]);
 
-  useEffect(() => {
-    if (items.length < 13) return;
-    scroll();
-  }, [items]);
-
   function handleSubmit(newQuery) {
     if (newQuery === query) return;
     setQuery(newQuery);
@@ -64,22 +59,6 @@ export const App = () => {
 
   function errorInfo(message) {
     toast.error(`Oops, something went wrong: ${message}`);
-  }
-
-  function scroll() {
-    const { height: cardHeight } = document
-      .querySelector('.gallery')
-      .firstElementChild.getBoundingClientRect();
-
-    window.scrollBy({
-      top: cardHeight * 2,
-      behavior: 'smooth',
-    });
-
-    // window.scrollTo({
-    //   top: document.documentElement.scrollHeight,
-    //   behavior: 'smooth',
-    // });
   }
 
   const showLoadMore = page < Math.ceil(total / 12) && items.length > 0;
