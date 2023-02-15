@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { getPhotos } from 'utils';
 import { Searchbar } from 'components/Searchbar';
 import { ImageGallery } from 'components/ImageGallery';
@@ -10,87 +10,59 @@ import { ToastContainer, toast } from 'react-toastify';
 
 import 'react-toastify/dist/ReactToastify.css';
 
-export class App extends Component {
-  state = {
-    query: '',
-    page: 1,
-    total: 0,
-    isLoading: false,
-    items: [],
-    error: null,
-    url: '',
-  };
+export const App = () => {
+  const [query, setQuery] = useState('');
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [items, setItems] = useState([]);
+  const [error, setError] = useState(null);
+  const [url, setUrl] = useState('');
 
-  componentDidUpdate(_, prevState) {
-    const { query: prevQuery, page: prevPage } = prevState;
-    const { query: nextQuery, page: nextPage } = this.state;
-
-    if (prevQuery !== nextQuery || prevPage !== nextPage) {
-      this.getItems();
+  useEffect(() => {
+    if (query === '') return;
+    getItems();
+    async function getItems() {
+      try {
+        setIsLoading(true);
+        const { hits: moreItems, totalHits: total } = await getPhotos(
+          query,
+          page
+        );
+        setItems(items => [...items, ...moreItems]);
+        setTotal(total);
+        if (total === 0) notify(query);
+      } catch (error) {
+        setError(error);
+        errorInfo(error.message);
+      } finally {
+        setIsLoading(false);
+        if (page !== 1) scroll();
+      }
     }
+  }, [page, query]);
+
+  function handleSubmit(newQuery) {
+    if (newQuery === query) return;
+    setQuery(newQuery);
+    setPage(1);
+    setItems([]);
+    setError(null);
   }
 
-  handleSubmit = query => {
-    if (query === this.state.query) return;
-    this.setState({
-      query,
-      page: 1,
-      items: [],
-      error: null,
-    });
-  };
+  function loadMore() {
+    setPage(page => page + 1);
+  }
 
-  getItems = async () => {
-    const { query, page } = this.state;
-    this.setState({ isLoading: true });
-    try {
-      const { hits: moreItems, totalHits: total } = await getPhotos(
-        query,
-        page
-      );
-      this.setState(({ items }) => ({
-        items: [...items, ...moreItems],
-        total,
-      }));
-
-      if (total === 0) {
-        this.notify(query);
-      }
-    } catch (error) {
-      this.setState({ error });
-      this.errorInfo(error.message);
-    } finally {
-      this.setState({ isLoading: false }, () => {
-        if (page !== 1) {
-          this.scroll();
-        }
-      });
-    }
-  };
-
-  closeModal = () => {
-    this.setState({
-      url: '',
-    });
-  };
-
-  selectImg = url => {
-    this.setState({ url });
-  };
-
-  notify = message => {
+  function notify(message) {
     toast.warning(`Oops, "${message}" pictures were not found.`);
-  };
+  }
 
-  errorInfo = message => {
+  function errorInfo(message) {
     toast.error(`Oops, something went wrong: ${message}`);
-  };
+  }
 
-  loadMore = () => {
-    this.setState(({ page }) => ({ page: page + 1 }));
-  };
-
-  scroll = () => {
+  function scroll() {
     const { height: cardHeight } = document
       .querySelector('.gallery')
       .firstElementChild.getBoundingClientRect();
@@ -104,36 +76,33 @@ export class App extends Component {
     //    top: document.documentElement.scrollHeight,
     //    behavior: 'smooth',
     //  });
-  };
-
-  render() {
-    const { page, total, items, isLoading, error, url } = this.state;
-    const showLoadMore = page < Math.ceil(total / 12);
-    const end = !(page < Math.ceil(total / 12)) && items.length > 0;
-    const showModal = url.length > 0;
-
-    return (
-      <>
-        <Container>
-          <Searchbar onSubmit={this.handleSubmit} />
-
-          <ImageGallery items={items} onSelect={this.selectImg} />
-          {isLoading && <Loader />}
-          {showLoadMore && (
-            <Button onClick={this.loadMore} type="button">
-              Load more
-            </Button>
-          )}
-          {end && <End>End of content</End>}
-          {error && <End>Error</End>}
-          {showModal && (
-            <Modal onCloseModal={this.closeModal}>
-              <img src={url} alt="modal window" />
-            </Modal>
-          )}
-        </Container>
-        <ToastContainer autoClose={2500} />
-      </>
-    );
   }
-}
+
+  const showLoadMore = page < Math.ceil(total / 12) && items.length > 0;
+  const end = !(page < Math.ceil(total / 12)) && items.length > 0;
+  const showModal = url.length > 0;
+
+  return (
+    <>
+      <Container>
+        <Searchbar onSubmit={handleSubmit} />
+
+        <ImageGallery items={items} onSelect={setUrl} />
+        {isLoading && <Loader />}
+        {showLoadMore && (
+          <Button onClick={loadMore} type="button">
+            Load more
+          </Button>
+        )}
+        {end && <End>End of content</End>}
+        {error && <End>Error</End>}
+        {showModal && (
+          <Modal onCloseModal={setUrl('')}>
+            <img src={url} alt="modal window" />
+          </Modal>
+        )}
+      </Container>
+      <ToastContainer autoClose={2500} />
+    </>
+  );
+};
