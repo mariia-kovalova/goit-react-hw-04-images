@@ -37,10 +37,14 @@ export const App = () => {
         errorInfo(error.message);
       } finally {
         setIsLoading(false);
-        if (page !== 1) scroll();
       }
     }
   }, [page, query]);
+
+  useEffect(() => {
+    if (items.length < 13) return;
+    scroll();
+  }, [items]);
 
   function handleSubmit(newQuery) {
     if (newQuery === query) return;
@@ -72,10 +76,10 @@ export const App = () => {
       behavior: 'smooth',
     });
 
-    //  window.scrollTo({
-    //    top: document.documentElement.scrollHeight,
-    //    behavior: 'smooth',
-    //  });
+    // window.scrollTo({
+    //   top: document.documentElement.scrollHeight,
+    //   behavior: 'smooth',
+    // });
   }
 
   const showLoadMore = page < Math.ceil(total / 12) && items.length > 0;
