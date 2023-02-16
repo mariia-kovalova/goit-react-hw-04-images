@@ -6,19 +6,15 @@ import { ModalStyled, Overlay } from './Modal.styled';
 const modalRoot = document.querySelector('#modal-root');
 
 export const Modal = ({ children, onCloseModal }) => {
-  const handleKeydown = useCallback(
-    e => {
+  useEffect(() => {
+    const onKeyDown = e => {
       if (e.code === 'Escape') {
         onCloseModal();
       }
-    },
-    [onCloseModal]
-  );
-
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeydown);
-    return window.removeEventListener('keydown', handleKeydown);
-  }, [handleKeydown]);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return window.removeEventListener('keydown', onKeyDown);
+  }, [onCloseModal]);
 
   const handleOverlayClick = ({ currentTarget, target }) => {
     if (currentTarget !== target) {
