@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from 'react';
+import { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import PropTypes from 'prop-types';
 import { ModalStyled, Overlay } from './Modal.styled';
@@ -13,7 +13,7 @@ export const Modal = ({ children, onCloseModal }) => {
       }
     };
     window.addEventListener('keydown', onKeyDown);
-    return window.removeEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
   }, [onCloseModal]);
 
   const handleOverlayClick = ({ currentTarget, target }) => {

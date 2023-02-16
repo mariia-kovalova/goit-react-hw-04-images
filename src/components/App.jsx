@@ -61,6 +61,10 @@ export const App = () => {
     toast.error(`Oops, something went wrong: ${message}`);
   }
 
+  function handleModalClose() {
+    setUrl('');
+  }
+
   const showLoadMore = page < Math.ceil(total / 12) && items.length > 0;
   const end = !(page < Math.ceil(total / 12)) && items.length > 0;
   const showModal = url.length > 0;
@@ -80,7 +84,7 @@ export const App = () => {
         {end && <End>End of content</End>}
         {error && <End>Error</End>}
         {showModal && (
-          <Modal onCloseModal={setUrl('')}>
+          <Modal onCloseModal={handleModalClose}>
             <img src={url} alt="modal window" />
           </Modal>
         )}
