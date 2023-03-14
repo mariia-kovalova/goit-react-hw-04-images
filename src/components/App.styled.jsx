@@ -10,3 +10,7 @@ export const Container = styled.div`
 export const End = styled.p`
   text-align: center;
 `;
+
+export const Trigger = styled.div`
+  padding: 20px;
+`;

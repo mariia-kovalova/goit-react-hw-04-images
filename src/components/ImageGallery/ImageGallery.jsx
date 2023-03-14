@@ -1,41 +1,26 @@
-import { useEffect } from 'react';
 import PropTypes from 'prop-types';
 import { ImageGalleryItem } from 'components/ImageGalleryItem';
 import { GalleryList } from './ImageGallery.styled';
 
-export const ImageGallery = ({ items, onSelect }) => {
-  useEffect(() => {
-    if (items.length < 13) return;
-    scroll();
-  }, [items]);
-
-  function scroll() {
-    const { height: cardHeight } = document
-      .querySelector('.gallery')
-      .firstElementChild.getBoundingClientRect();
-
-    window.scrollBy({
-      top: cardHeight * 2,
-      behavior: 'smooth',
-    });
-  }
-
-  return (
-    <GalleryList className="gallery">
-      {items.map(({ id, webformatURL, largeImageURL, tags }) => (
+export const ImageGallery = ({ items, onSelect }) => (
+  <GalleryList className="gallery">
+    {items.map(item => (
+      <li key={item.id}>
         <ImageGalleryItem
-          key={id}
-          srcUrl={webformatURL}
-          largeImageURL={largeImageURL}
-          description={tags}
-          onSelect={() => onSelect(largeImageURL)}
+          item={item}
+          onSelect={() => onSelect(item.largeImageURL)}
         />
-      ))}
-    </GalleryList>
-  );
-};
+      </li>
+    ))}
+  </GalleryList>
+);
 
 ImageGallery.propTypes = {
-  items: PropTypes.array.isRequired,
+  items: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      largeImageURL: PropTypes.string.isRequired,
+    }).isRequired
+  ),
   onSelect: PropTypes.func.isRequired,
 };

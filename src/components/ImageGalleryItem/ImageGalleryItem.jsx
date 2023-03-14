@@ -1,16 +1,21 @@
 import PropTypes from 'prop-types';
-import { Img, Item } from './ImageGalleryItem.styled';
+import { Img, Wrap } from './ImageGalleryItem.styled';
 
-export const ImageGalleryItem = ({ srcUrl, description, onSelect }) => {
+export const ImageGalleryItem = ({
+  item: { webformatURL, tags },
+  onSelect,
+}) => {
   return (
-    <Item onClick={onSelect}>
-      <Img src={srcUrl} alt={description} />
-    </Item>
+    <Wrap onClick={onSelect}>
+      <Img src={webformatURL} alt={tags} />
+    </Wrap>
   );
 };
 
 ImageGalleryItem.propTypes = {
-  srcUrl: PropTypes.string.isRequired,
-  description: PropTypes.string.isRequired,
+  item: PropTypes.shape({
+    webformatURL: PropTypes.string.isRequired,
+    tags: PropTypes.string.isRequired,
+  }).isRequired,
   onSelect: PropTypes.func.isRequired,
 };

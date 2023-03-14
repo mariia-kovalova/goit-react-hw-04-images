@@ -1,88 +1,91 @@
-import { useEffect, useState } from 'react';
-import { getPhotos } from 'utils';
+import { useEffect, useRef, useState } from 'react';
+import { getPhotos } from 'api';
 import { Searchbar } from 'components/Searchbar';
 import { ImageGallery } from 'components/ImageGallery';
 import { Loader } from 'components/Loader';
-import { Button } from 'components/Button';
-import { Modal } from 'components/Modal/Modal';
-import { Container, End } from './App.styled';
-import { ToastContainer, toast } from 'react-toastify';
-
+import { Modal } from 'components/Modal';
+import { Container, End, Trigger } from './App.styled';
+import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 
 export const App = () => {
   const [query, setQuery] = useState('');
   const [page, setPage] = useState(1);
+  const [url, setUrl] = useState('');
+  const trigger = useRef(null);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [items, setItems] = useState([]);
   const [error, setError] = useState(null);
-  const [url, setUrl] = useState('');
 
   useEffect(() => {
+    setError(null);
     if (query === '') return;
-    getItems();
-    async function getItems() {
+    getItems({ query, page });
+    async function getItems({ query, page }) {
       try {
         setIsLoading(true);
-        const { hits: moreItems, totalHits: total } = await getPhotos(
+        const { hits: moreItems, totalHits: total } = await getPhotos({
           query,
-          page
-        );
+          page,
+        });
+        if (total === 0) throw Error(`"${query}" pictures were not found.`);
         setItems(items => [...items, ...moreItems]);
         setTotal(total);
-        if (total === 0) notify(query);
       } catch (error) {
         setError(error);
-        errorInfo(error.message);
+        console.dir(error);
       } finally {
         setIsLoading(false);
       }
     }
   }, [page, query]);
 
+  useEffect(() => {
+    const option = {
+      root: null,
+      rootMargin: '20px',
+      threshold: 0,
+    };
+    const observer = new IntersectionObserver(handleObserver, option);
+    if (trigger.current) observer.observe(trigger.current);
+
+    function handleObserver(entries) {
+      const target = entries[0];
+      if (target.isIntersecting) {
+        setPage(prev => prev + 1);
+      }
+    }
+  });
+
   function handleSubmit(newQuery) {
     if (newQuery === query) return;
+    setItems([]);
+    setTotal(0);
     setQuery(newQuery);
     setPage(1);
-    setItems([]);
-    setError(null);
-  }
-
-  function loadMore() {
-    setPage(page => page + 1);
-  }
-
-  function notify(message) {
-    toast.warning(`Oops, "${message}" pictures were not found.`);
-  }
-
-  function errorInfo(message) {
-    toast.error(`Oops, something went wrong: ${message}`);
   }
 
   function handleModalClose() {
     setUrl('');
   }
 
-  const showLoadMore = page < Math.ceil(total / 12) && items.length > 0;
-  const end = !(page < Math.ceil(total / 12)) && items.length > 0;
+  const showGallary = total > 0 && !error;
+  const hasMore =
+    !isLoading && !error && items.length > 0 && page < Math.ceil(total / 12);
+  const end =
+    !isLoading && !error && items.length > 0 && !(page < Math.ceil(total / 12));
   const showModal = url.length > 0;
 
   return (
     <>
       <Container>
         <Searchbar onSubmit={handleSubmit} />
-
-        <ImageGallery items={items} onSelect={setUrl} />
+        {showGallary && <ImageGallery items={items} onSelect={setUrl} />}
+        {hasMore && <Trigger ref={trigger} />}
         {isLoading && <Loader />}
-        {showLoadMore && (
-          <Button onClick={loadMore} type="button">
-            Load more
-          </Button>
-        )}
+        {error && <End>Oops, something went wrong! {error.message}</End>}
         {end && <End>End of content</End>}
-        {error && <End>Error</End>}
         {showModal && (
           <Modal onCloseModal={handleModalClose}>
             <img src={url} alt="modal window" />
